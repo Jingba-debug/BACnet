@@ -301,9 +301,9 @@ namespace System.IO.BACnet
                 if (configuration.OwnCertificate != null)
                     ws.Options.ClientCertificates.Add(configuration.OwnCertificate);
 
-                #if NET5_0_OR_GREATER
+#if NET5_0_OR_GREATER
                 ws.Options.RemoteCertificateValidationCallback = RemoteCertificateValidationCallback;
-                #endif
+#endif
             }
 
             return ws;
@@ -856,7 +856,14 @@ namespace System.IO.BACnet
                 rng.GetBytes(buffer);
             }
 #endif
-        }   
+        }
+
+        public bool IsHealthy()
+        {
+            return state == BACnetSCState.CONNECTED &&
+                   _webSocket != null &&
+                   _webSocket.State == WebSocketState.Open;
+        }
 
     }
 }
