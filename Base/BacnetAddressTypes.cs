@@ -9,5 +9,6 @@ public enum BacnetAddressTypes
     ArcNet,
     LonTalk,
     PTP,
-    IPV6
+    IPV6,
+    SC
 }

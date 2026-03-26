@@ -4,7 +4,7 @@ public class BacnetAddress : ASN1.IEncode
 {
     public ushort net;
     public byte[] adr;
-    public byte[] VMac = new byte[3]; // for IP V6, could be integrated also as 3 additional bytes in adr
+    public byte[] VMac = new byte[6]; 
     public BacnetAddressTypes type;
 
     // Modif FC
