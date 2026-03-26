@@ -28,6 +28,8 @@
 *
 *********************************************************************/
 
+using SharpPcap;
+
 namespace System.IO.BACnet;
 
 // A reference to PacketDotNet.dll & SharpPcap.dll should be made
@@ -123,7 +125,7 @@ internal class BacnetEthernetProtocolTransport : BacnetTransportBase
             try
             {
                 var device = devices.FirstOrDefault(dev => dev.Interface.FriendlyName == _deviceName);
-                device?.Open(DeviceMode.Normal, 1000); // 1000 ms read timeout
+                device?.Open(DeviceModes.None, 1000); // 1000 ms read timeout
                 return device;
             }
             catch
@@ -133,7 +135,7 @@ internal class BacnetEthernetProtocolTransport : BacnetTransportBase
         }
         foreach (var device in devices)
         {
-            device.Open(DeviceMode.Normal, 1000); // 1000 ms read timeout
+            device.Open(DeviceModes.None, 1000); // 1000 ms read timeout
             if (device.LinkType == LinkLayers.Ethernet
                 && device.Interface.MacAddress != null)
                 return device;
@@ -150,7 +152,10 @@ internal class BacnetEthernetProtocolTransport : BacnetTransportBase
         {
             try
             {
-                var packet = _device.GetNextPacket();
+                if (_device.GetNextPacket(out PacketCapture packetCapture) != GetPacketStatus.PacketRead)
+                    return;
+
+                RawCapture packet = packetCapture.GetPacket();
                 if (packet != null)
                     OnPacketArrival(packet);
                 else
