@@ -21,7 +21,8 @@ namespace System.IO.BACnet.Transport
         public bool DirectConnect = false;
 
         public bool OnlyAllowsTLS13 = false;
-        public bool UseTLS => primaryHubURI.Contains("wss://", StringComparison.OrdinalIgnoreCase);
+        public bool UseTLS => !string.IsNullOrEmpty(primaryHubURI) &&
+            primaryHubURI.StartsWith("wss://", StringComparison.OrdinalIgnoreCase);
 
         private int _AutoReconnectDelay = -1;
 

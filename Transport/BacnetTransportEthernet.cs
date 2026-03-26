@@ -125,7 +125,11 @@ internal class BacnetEthernetProtocolTransport : BacnetTransportBase
             try
             {
                 var device = devices.FirstOrDefault(dev => dev.Interface.FriendlyName == _deviceName);
-                device?.Open(DeviceModes.None, 1000); // 1000 ms read timeout
+#if NET48
+                device?.Open(DeviceMode.Normal, 1000);
+#else
+                device?.Open(DeviceModes.None, 1000);
+#endif
                 return device;
             }
             catch
@@ -135,7 +139,11 @@ internal class BacnetEthernetProtocolTransport : BacnetTransportBase
         }
         foreach (var device in devices)
         {
-            device.Open(DeviceModes.None, 1000); // 1000 ms read timeout
+#if NET48
+            device.Open(DeviceMode.Normal, 1000);
+#else
+            device.Open(DeviceModes.None, 1000);
+#endif
             if (device.LinkType == LinkLayers.Ethernet
                 && device.Interface.MacAddress != null)
                 return device;
@@ -152,10 +160,16 @@ internal class BacnetEthernetProtocolTransport : BacnetTransportBase
         {
             try
             {
+#if NET48
+                RawCapture packet;
+                if (_device.GetNextPacket(out packet) < 0)
+                    return;
+#else
                 if (_device.GetNextPacket(out PacketCapture packetCapture) != GetPacketStatus.PacketRead)
                     return;
 
                 RawCapture packet = packetCapture.GetPacket();
+#endif
                 if (packet != null)
                     OnPacketArrival(packet);
                 else

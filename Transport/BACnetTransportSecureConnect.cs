@@ -16,6 +16,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
+using System.Security.Cryptography;
 
 namespace System.IO.BACnet
 {
@@ -71,7 +72,7 @@ namespace System.IO.BACnet
 
             if (configuration.VMAC == null || configuration.VMAC.Length != 6)
             {
-                Random.Shared.NextBytes(myVMAC);
+                FillRandomBytes(myVMAC);
                 myVMAC[0] = (byte)((myVMAC[0] & 0xF0) | 0x02);
             }
             else
@@ -300,14 +301,9 @@ namespace System.IO.BACnet
                 if (configuration.OwnCertificate != null)
                     ws.Options.ClientCertificates.Add(configuration.OwnCertificate);
 
+                #if NET5_0_OR_GREATER
                 ws.Options.RemoteCertificateValidationCallback = RemoteCertificateValidationCallback;
-
-#if NET8_0_OR_GREATER
-                if (configuration.OnlyAllowsTLS13)
-                {
-                    ws.Options.RemoteCertificateValidationCallback = RemoteCertificateValidationCallback;
-                }
-#endif
+                #endif
             }
 
             return ws;
@@ -325,7 +321,7 @@ namespace System.IO.BACnet
                 WebSocketReceiveResult result;
                 do
                 {
-                    result = await ws.ReceiveAsync(buffer, cancellationToken).ConfigureAwait(false);
+                    result = await ws.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken).ConfigureAwait(false);
 
                     if (result.MessageType == WebSocketMessageType.Close)
                     {
@@ -761,7 +757,7 @@ namespace System.IO.BACnet
                         if (ErrorClass == (byte)BacnetErrorClasses.ERROR_CLASS_COMMUNICATION &&
                             ErrorCode == (byte)BacnetErrorCodes.ERROR_CODE_NODE_DUPLICATE_VMAC)
                         {
-                            Random.Shared.NextBytes(myVMAC);
+                            FillRandomBytes(myVMAC);
                             myVMAC[0] = (byte)((myVMAC[0] & 0xF0) | 0x02);
                             DuplicateVMACCount++;
 
@@ -850,5 +846,17 @@ namespace System.IO.BACnet
             BVLC_HEARTBEAT_ACK = 0xB,
             BVLC_PROPRIETARY_MESSAGE = 0xC
         };
+        private static void FillRandomBytes(byte[] buffer)
+        {
+#if NET8_0_OR_GREATER
+    Random.Shared.NextBytes(buffer);
+#else
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(buffer);
+            }
+#endif
+        }   
+
     }
 }
